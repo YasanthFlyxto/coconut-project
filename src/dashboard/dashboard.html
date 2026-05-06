@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flyxto — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <header id="header">
+      <div class="logo">
+        <div class="logo-dot"></div>
+        <span class="logo-name">FLYXTO</span>
+        <span class="logo-sub">Video Trigger System</span>
+      </div>
+      <div id="serial-badge" class="serial-badge disconnected">
+        <span class="serial-dot"></span>
+        <span id="serial-label">Disconnected</span>
+      </div>
+    </header>
+
+    <!-- Status Card -->
+    <section id="status-section">
+      <div id="status-card">
+        <div id="status-ring">
+          <div id="status-ring-inner">
+            <div id="status-icon">⏸</div>
+          </div>
+        </div>
+        <div id="status-info">
+          <div id="status-label">IDLE</div>
+          <div id="status-description">Waiting for IR sensor or Remote 1 trigger</div>
+        </div>
+      </div>
+
+      <!-- Reset countdown bar -->
+      <div id="countdown-wrap" class="hidden">
+        <div id="countdown-label">Resetting in <span id="countdown-secs">10</span>s</div>
+        <div id="countdown-track"><div id="countdown-bar"></div></div>
+      </div>
+    </section>
+
+    <!-- Play Video 2 Button -->
+    <section id="play-section">
+      <button id="btn-play-v2" class="play-btn" disabled>
+        <span class="play-icon">▶</span>
+        <span class="play-text">Play Video 2</span>
+        <span class="play-hint">Active when Video 1 finishes</span>
+      </button>
+    </section>
+
+    <!-- Video File Status -->
+    <section id="video-files-section">
+      <div class="section-title">Video Files</div>
+      <div class="file-list">
+        <div class="file-item" id="file1-item">
+          <div class="file-icon">🎬</div>
+          <div class="file-info">
+            <div class="file-name">video1.mp4</div>
+            <div class="file-status" id="file1-status">Checking...</div>
+          </div>
+          <div class="file-badge" id="file1-badge">—</div>
+        </div>
+        <div class="file-item" id="file2-item">
+          <div class="file-icon">🎬</div>
+          <div class="file-info">
+            <div class="file-name">video2.mp4</div>
+            <div class="file-status" id="file2-status">Checking...</div>
+          </div>
+          <div class="file-badge" id="file2-badge">—</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Serial / Hardware Settings -->
+    <section id="settings-section">
+      <div class="section-title">Hardware Settings</div>
+      <div class="settings-grid">
+        <div class="input-group">
+          <label for="port-select">COM Port</label>
+          <div class="input-row">
+            <select id="port-select">
+              <option value="">— Select port —</option>
+            </select>
+            <button id="btn-refresh-ports" class="icon-btn" title="Refresh ports">↻</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="baud-input">Baud Rate</label>
+          <input type="number" id="baud-input" value="9600" min="300" max="115200" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="btn-connect" class="action-btn primary">Connect</button>
+        <button id="btn-disconnect" class="action-btn danger" disabled>Disconnect</button>
+      </div>
+    </section>
+
+    <!-- Simulate (Testing) -->
+    <section id="simulate-section">
+      <div class="section-title">Simulate Triggers <span class="test-badge">TEST</span></div>
+      <div class="btn-row">
+        <button id="btn-sim-sensor" class="sim-btn">📡 IR Sensor</button>
+        <button id="btn-sim-r1" class="sim-btn">📻 Remote 1</button>
+        <button id="btn-sim-r2" class="sim-btn">📻 Remote 2</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

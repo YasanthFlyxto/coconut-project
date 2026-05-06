@@ -1,0 +1,61 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Build output
+/dist
+/build
+/out
+/.parcel-cache
+/.next
+/.nuxt
+/.cache
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.vscode/
+.history/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.swp
+*.swo
+
+# Electron
+*.asar
+release/
+
+# Arduino build artifacts
+arduino/build/
+arduino/*.hex
+arduino/*.elf
+arduino/*.bin
+
+# Misc
+.vs/
+*.suo
+*.user
+*.log

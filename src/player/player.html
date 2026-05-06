@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flyxto — Video Player</title>
+  <link rel="stylesheet" href="player.css" />
+</head>
+<body>
+  <div id="player-root">
+    <!-- Idle overlay (loading splash — visible only until first frame decodes) -->
+    <div id="idle-overlay" class="visible">
+      <div class="idle-logo">
+        <div class="idle-spinner"></div>
+        <div class="idle-sub">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Video layers (crossfade between them) -->
+    <video id="video-a" class="video-layer" preload="auto" playsinline></video>
+    <video id="video-b" class="video-layer" preload="auto" playsinline></video>
+
+    <!-- State badge (corner) -->
+    <div id="state-badge"></div>
+  </div>
+
+  <script src="player.js"></script>
+</body>
+</html>
