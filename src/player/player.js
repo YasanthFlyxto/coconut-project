@@ -54,17 +54,40 @@ function handleStateUpdate({ state }) {
     case 'IDLE':
       showBadge('IDLE', 'idle');
       showIdle(false);
-      // Snap back to video 1 first frame
+      // videoA was pre-seeked to frame 0 the moment video 2 ended.
+      // Keep videoB opaque underneath while we snap videoA in.
       videoB.pause();
+      videoB.classList.add('leaving');
       videoB.classList.remove('active');
-      videoB.classList.remove('leaving');
-      videoA.classList.add('active');
-      videoA.currentTime = 0;
-      videoA.pause();
       activeLayer = 'a';
-      // Re-preload video 2 for next cycle
-      videoB.src = video2Src;
-      videoB.load();
+
+      const revealVideoA = () => {
+        // Snap in instantly — no opacity fade that would expose the black background.
+        videoA.style.transition = 'none';
+        videoA.classList.add('active');
+        // Two rAF cycles flush the style override to the compositor before
+        // re-enabling transitions for normal use.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          videoA.style.transition = '';
+        }));
+        // Keep videoB as an opaque backdrop until videoA is fully painted.
+        setTimeout(() => {
+          videoB.classList.remove('leaving');
+          // Re-preload video 2 for next cycle
+          videoB.src = video2Src;
+          videoB.load();
+        }, 500);
+      };
+
+      // If the pre-seek from onActiveVideoEnded already finished, reveal instantly.
+      // Otherwise fall back to waiting for the seeked event.
+      if (videoA.readyState >= 2 && Math.abs(videoA.currentTime) < 0.1) {
+        revealVideoA();
+      } else {
+        videoA.pause();
+        videoA.currentTime = 0;
+        videoA.addEventListener('seeked', revealVideoA, { once: true });
+      }
       break;
 
     case 'PLAYING_VIDEO_1':
@@ -155,8 +178,12 @@ function onActiveVideoEnded(e) {
     // Video 1 ended — notify main (main will send WAITING_FOR_VIDEO_2)
     api.notifyVideo1Ended();
   } else {
-    // Video 2 ended — freeze on last frame, notify main
+    // Video 2 ended — freeze on last frame, notify main.
+    // Immediately pre-seek videoA to frame 0 in the background while videoB
+    // is still visible, so IDLE can snap it in instantly with no black gap.
     videoB.pause();
+    videoA.pause();
+    videoA.currentTime = 0;
     api.notifyVideo2Ended();
   }
 }

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, Menu, globalShortcut } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -194,10 +194,9 @@ function createWindows() {
     y: videoDisplay.bounds.y,
     width: videoDisplay.bounds.width,
     height: videoDisplay.bounds.height,
-    fullscreen: displays.length > 1, // fullscreen only if secondary display
+    fullscreen: false,
     backgroundColor: '#000000',
-    frame: displays.length === 1,
-    titleBarStyle: 'hiddenInset',
+    frame: true,
     title: 'Flyxto — Video Player',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -283,8 +282,16 @@ ipcMain.on('simulate-remote2', () => triggerVideo2());
 //  APP LIFECYCLE
 // ─────────────────────────────────────────────
 app.whenReady().then(async () => {
+  Menu.setApplicationMenu(null);
   createWindows();
   await listPorts();
+
+  // F11 toggles fullscreen on the player window
+  globalShortcut.register('F11', () => {
+    if (playerWindow && !playerWindow.isDestroyed()) {
+      playerWindow.setFullScreen(!playerWindow.isFullScreen());
+    }
+  });
 
   if (config.autoConnect && config.serialPort) {
     setTimeout(() => connectSerial(config.serialPort, config.baudRate), 1500);
@@ -292,6 +299,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
+  globalShortcut.unregisterAll();
   disconnectSerial();
   app.quit();
 });
