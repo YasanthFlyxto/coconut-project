@@ -31,7 +31,6 @@ async function init() {
     videoA.pause();
     videoA.classList.add('active');
     activeLayer = 'a';
-    // Hide the overlay once first frame is ready
     showIdle(false);
   }, { once: true });
 
@@ -43,27 +42,27 @@ async function init() {
   api.onStateUpdate(handleStateUpdate);
 
   showBadge('IDLE', 'idle');
-  // Overlay stays visible until first frame is decoded
   showIdle(true);
 }
 
 // ─── State Handler ───────────────────────────
-function handleStateUpdate({ state, resetDelayMs }) {
+function handleStateUpdate({ state }) {
   console.log('[PLAYER] State:', state);
 
   switch (state) {
+
     case 'IDLE':
-      // Crossfade back to video 1 first frame (from video 2 last frame)
       showBadge('IDLE', 'idle');
       showIdle(false);
-      // Reload video 1 and freeze on first frame
+      // Snap back to video 1 first frame
       videoB.pause();
       videoB.classList.remove('active');
+      videoB.classList.remove('leaving');
+      videoA.classList.add('active');
       videoA.currentTime = 0;
       videoA.pause();
-      videoA.classList.add('active');
       activeLayer = 'a';
-      // Preload video 2 again for next cycle
+      // Re-preload video 2 for next cycle
       videoB.src = video2Src;
       videoB.load();
       break;
@@ -71,75 +70,80 @@ function handleStateUpdate({ state, resetDelayMs }) {
     case 'PLAYING_VIDEO_1':
       showIdle(false);
       showBadge('VIDEO 1 ▶', 'video1');
-      // Video A is already loaded at frame 0 — just press play
       videoA.currentTime = 0;
-      videoA.play().catch(e => console.error('[PLAYER] Play error:', e));
       videoA.classList.add('active');
+      videoA.play().catch(e => console.error('[PLAYER] Play error:', e));
       activeLayer = 'a';
       break;
 
     case 'WAITING_FOR_VIDEO_2':
       showBadge('WAITING ●', 'waiting');
-      // video-b is already preloaded — just freeze video-a
-      videoA.pause();
+      // Video 1 just ended — it's frozen on its last frame naturally.
+      // Now decode + show video 2's first frame so it's already visible
+      // when the play command arrives. No black flash possible.
+      showVideo2FirstFrame();
       break;
 
     case 'PLAYING_VIDEO_2':
       showBadge('VIDEO 2 ▶', 'video2');
-      // Crossfade from A to B
-      crossfadeTo('b', video2Src);
+      // Video 2 is already on screen at frame 0 — just start playing.
+      videoB.play().catch(e => console.error('[PLAYER] Play error:', e));
       break;
 
     case 'RESETTING':
       showBadge('RESETTING ↺', 'resetting');
-      // Video 2 is already paused at end, show badge and wait
+      // Video 2 is paused at its last frame; wait for main to send IDLE
       break;
   }
 }
 
-// ─── Video Control ───────────────────────────
-function playLayer(layer, src) {
-  const el = layer === 'a' ? videoA : videoB;
-  el.currentTime = 0;
-  if (el.src !== src) {
-    el.src = src;
-    el.load();
+// ─── Show Video 2 First Frame (frozen) ───────
+// Called during WAITING_FOR_VIDEO_2.
+// Seeks videoB to t=0, waits for the frame to be decoded,
+// then instantly swaps it in on top of videoA's last frame.
+function showVideo2FirstFrame() {
+  // Ensure videoB is loaded and at position 0
+  if (videoB.src !== video2Src) {
+    videoB.src = video2Src;
+    videoB.load();
   }
-  el.play().catch(e => console.error('[PLAYER] Play error:', e));
-  el.classList.add('active');
-  activeLayer = layer;
+  videoB.pause();
+  videoB.currentTime = 0;
+
+  const swap = () => {
+    // Keep videoA fully visible underneath during the instant swap
+    videoA.classList.add('leaving');
+    videoA.classList.remove('active');
+    // Show videoB (first frame, still paused)
+    videoB.classList.add('active');
+    activeLayer = 'b';
+    // Clean up videoA after CSS transition finishes
+    setTimeout(() => {
+      videoA.classList.remove('leaving');
+      videoA.pause();
+    }, 450);
+  };
+
+  if (videoB.readyState >= 2) {
+    // Frame data already available — seeked event confirms decode is done
+    videoB.addEventListener('seeked', swap, { once: true });
+  } else {
+    // Not ready yet — wait for canplay, then seek
+    videoB.addEventListener('canplay', () => {
+      videoB.addEventListener('seeked', swap, { once: true });
+      videoB.currentTime = 0;
+    }, { once: true });
+  }
 }
 
-function crossfadeTo(targetLayer, src) {
-  const incoming = targetLayer === 'a' ? videoA : videoB;
-  const outgoing = targetLayer === 'a' ? videoB : videoA;
-
-  incoming.currentTime = 0;
-  if (incoming.src !== `${src}`) {
-    incoming.src = src;
-    incoming.load();
-  }
-
-  incoming.play().catch(e => console.error('[PLAYER] Crossfade play error:', e));
-  incoming.classList.add('active');
-
-  // After transition duration, deactivate outgoing
-  setTimeout(() => {
-    outgoing.pause();
-    outgoing.classList.remove('active');
-    outgoing.currentTime = 0;
-  }, 450);
-
-  activeLayer = targetLayer;
-}
-
+// ─── Video Control Helpers ────────────────────
 function stopAll() {
   videoA.pause();
   videoB.pause();
   videoA.currentTime = 0;
   videoB.currentTime = 0;
-  videoA.classList.remove('active');
-  videoB.classList.remove('active');
+  videoA.classList.remove('active', 'leaving');
+  videoB.classList.remove('active', 'leaving');
 }
 
 // ─── Event: Video Ended ──────────────────────
@@ -148,10 +152,10 @@ function onActiveVideoEnded(e) {
   if (which !== activeLayer) return; // ignore non-active layer
 
   if (activeLayer === 'a') {
-    // Video 1 ended
+    // Video 1 ended — notify main (main will send WAITING_FOR_VIDEO_2)
     api.notifyVideo1Ended();
   } else {
-    // Video 2 ended — pause on last frame
+    // Video 2 ended — freeze on last frame, notify main
     videoB.pause();
     api.notifyVideo2Ended();
   }
@@ -159,7 +163,6 @@ function onActiveVideoEnded(e) {
 
 // ─── UI Helpers ──────────────────────────────
 function showIdle(show) {
-  // Overlay is only used as a loading splash until first frame is ready
   if (show) {
     idleOverlay.classList.add('visible');
   } else {

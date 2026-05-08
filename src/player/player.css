@@ -27,9 +27,17 @@ html, body {
   z-index: 1;
 }
 
+/* Active layer: fully visible on top */
 .video-layer.active {
   opacity: 1;
   z-index: 2;
+}
+
+/* Leaving layer: stays fully opaque underneath while incoming fades in */
+.video-layer.leaving {
+  opacity: 1;
+  z-index: 1;
+  transition: none; /* no fade-out — just sit underneath */
 }
 
 /* ── Idle overlay (loading splash only — fades out once first frame is ready) ── */
