@@ -10,7 +10,7 @@ let config = {
   baudRate: 9600,
   video1: path.join(__dirname, 'videos', 'video1.mp4'),
   video2: path.join(__dirname, 'videos', 'video2.mp4'),
-  resetDelayMs: 10000,        // pause after video2 ends before resetting
+  resetDelayMs: 0,        // pause after video2 ends before resetting
   crossfadeDurationMs: 400,   // crossfade between videos
   video2DisplayIndex: 0,      // 0 = primary, 1 = secondary display
   autoConnect: true
@@ -269,6 +269,7 @@ ipcMain.handle('disconnect-serial', () => {
   return true;
 });
 
+ipcMain.on('play-video1', () => triggerVideo1());
 ipcMain.on('play-video2', () => triggerVideo2());
 ipcMain.on('video1-ended', () => onVideo1Ended());
 ipcMain.on('video2-ended', () => onVideo2Ended());

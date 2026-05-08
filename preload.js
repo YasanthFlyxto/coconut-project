@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   disconnectSerial: () => ipcRenderer.invoke('disconnect-serial'),
 
   // Playback control (dashboard → main)
+  playVideo1: () => ipcRenderer.send('play-video1'),
   playVideo2: () => ipcRenderer.send('play-video2'),
 
   // Simulation (testing without hardware)

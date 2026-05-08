@@ -11,6 +11,7 @@ const statusDescription = document.getElementById('status-description');
 const serialBadge       = document.getElementById('serial-badge');
 const serialLabel       = document.getElementById('serial-label');
 
+const btnPlayV1         = document.getElementById('btn-play-v1');
 const btnPlayV2         = document.getElementById('btn-play-v2');
 const portSelect        = document.getElementById('port-select');
 const baudInput         = document.getElementById('baud-input');
@@ -87,7 +88,8 @@ function applyState(state) {
   statusLabel.textContent = s.label;
   statusDescription.textContent = s.desc;
 
-  // Play V2 button
+  // Play buttons
+  btnPlayV1.disabled = (state !== 'IDLE');
   btnPlayV2.disabled = (state !== 'WAITING_FOR_VIDEO_2');
 
   // Countdown
@@ -182,6 +184,10 @@ function updateFileStatus(num, found) {
 }
 
 // ── Button Handlers ───────────────────────────
+btnPlayV1.addEventListener('click', () => {
+  api.playVideo1();
+});
+
 btnPlayV2.addEventListener('click', () => {
   api.playVideo2();
 });
